@@ -1,0 +1,47 @@
+digraph CodeFlow {
+    rankdir=TB;
+    node [shape=box, style=filled, fillcolor=white];
+    
+    # Nodes
+    Main [label="main.py\n(economic_analysis Class)", fillcolor="#E6F3FF"];
+    InputFile [label="input.yaml", shape=note, fillcolor="#FFF2CC"];
+    SourceFile [label="SOURCE_DATA.xlsx", shape=cylinder, fillcolor="#FFF2CC"];
+    
+    # Logic Modules
+    RS [label="Reactor_Selection.py"];
+    Fuel [label="Fuel_Cost_Input.py"];
+    EQ [label="EQcost.py"];
+    CON [label="CONSTRUCTIONcost.py"];
+    ESC [label="Escalation.py"];
+    CF [label="Cash_Flow_Statement.py", fillcolor="#E2F0D9"];
+    Analysis [label="Analysis.py", fillcolor="#E2F0D9"];
+    
+    # Outputs
+    OutputFile [label="output/CFS.xlsx", shape=cylinder, fillcolor="#FFF2CC"];
+
+    # Edges
+    InputFile -> Main [label="Load Config\n(Dataclass)", style=bold];
+    SourceFile -> Main [label="Load Source Data"];
+    
+    Main -> RS [label="Step 1: Reactor Specs"];
+    Main -> Fuel [label="Step 2: Fuel Costs"];
+    
+    Main -> EQ [label="Step 3: EQ Cost Scaling"];
+    SourceFile -> EQ [label="Raw EQ Data"];
+    
+    Main -> CON [label="Step 4: Construction Cost"];
+    
+    Main -> ESC [label="Step 5: CAPEX Schedule"];
+    EQ -> ESC [label="Processed EQ Cost"];
+    CON -> ESC [label="Processed Const Cost"];
+    
+    Main -> CF [label="Step 6: Build Cash Flow"];
+    Fuel -> CF [label="Fuel Cost Data"];
+    ESC -> CF [label="CAPEX Data"];
+    
+    CF -> Main [label="Cash Flow DataFrame"];
+    Main -> OutputFile [label="Save"];
+    
+    Main -> Analysis [label="Step 7: LCOE/IRR/BEP"];
+    CF -> Analysis [label="Cash Flow Data"];
+}
