@@ -212,6 +212,26 @@ class economic_analysis():
         # Schedule 데이터 (임시!!!)
         self.df_schedule = pd.read_excel(source_file, sheet_name='SCHEDULE') # Schedule 데이터 (임시!!!)
 
+        # print(f"df_EQcost_original: {self.df_EQcost_original}")
+        # print(f"df_currency: {self.df_currency}")
+        # print(f"df_dollarValue: {self.df_dollarValue}")
+        # print(f"df_CP_List: {self.df_CP_List}")
+        # print(f"df_scaling_power: {self.df_scaling_power}")
+        # print(f"df_country_specific: {self.df_country_specific}")
+        # print(f"self.df_schedule: {self.df_schedule}")
+        
+        # want to save as .csv
+        # self.df_EQcost_original.to_csv('EQcost_original.csv', index=False)
+        # self.df_currency.to_csv('currency.csv', index=False)
+        # self.df_dollarValue.to_csv('dollarValue.csv', index=False)
+        # self.df_CP_List.to_csv('CP_List.csv', index=False)
+        # self.df_scaling_power.to_csv('SCALING_POWER_EXPONENT.csv', index=False)
+        # self.df_country_specific.to_csv('COUNTRY_SPECIFIC.csv', index=False)
+        # self.df_schedule.to_csv('SCHEDULE.csv', index=False)
+        
+        # exit()
+
+
     def step_3_calculate_eq_cost(self, ElectricCapacityPerModule):
         '''
         # STEP 3: EQ Cost 계산 ##############################################################################################################
@@ -296,7 +316,7 @@ class economic_analysis():
         # step 1,2 Initialize the input data
         # self.init()
 
-        # step 2-2. Reactor Selection Output 
+        # step 2-2. Reactor Selection Output: 사실상 ElectricalCapacityPerModule 뽑는 용도
         (ThermalCapacityPerModule, ElectricCapacityPerModule, 
         TotalCapacity, CoreH, CoreD, RPVvolume) = RS.Core(self.config.powerDensity, self.config.activeCoreD, self.config.activeCoreH, self.config.activeCoreDpct, 
             self.config.activeCoreHpct, self.config.TGefficiency, self.config.moduleNumber)
@@ -304,22 +324,33 @@ class economic_analysis():
         # step 3-1. Fuel Interim Storage 계산
         annualCost_CASK = Fuel.InterimStorage(self.config.COSTperHM, self.config.HMperASSEMBLY,self.config.BatchNumber, 
             self.config.BatchCycleLength, self.config.ASSEMBLYperCORE, self.config.moduleNumber)
-        print(annualCost_CASK)
+        # print(f"annualCost_CASK: {annualCost_CASK}")
 
         # step 3-2. eq cost 계산
         self.df_EQcost_original = self.step_3_calculate_eq_cost(ElectricCapacityPerModule) # self.self.df_EQcost_original 생성
         CPpivot = EQ.sum_by_CP(self.df_EQcost_original, self.df_CP_List, self.config.minMeanMAX) # CP별 합산한 값 반환
-        #print(CPpivot)
+        # Save intermediate results to output directory
+        # output_dir = self.project_root / "output"
+        # output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # self.df_EQcost_original.to_csv(output_dir / "df_EQcost_original.csv", index=False)
+        # CPpivot.to_csv(output_dir / "CPpivot.csv", index=False)
+        # exit()
 
         # 4. construction cost 계산
         CPconst = CON.scaling(self.df_CP_List, self.df_scaling_power, self.df_country_specific,self.config.Country, self.config.moduleNumber, ElectricCapacityPerModule)
-        #print(CPconst)
+        # CPconst.to_csv(output_dir / "CPconst.csv", index=False)
+        # exit()
 
         # 5. CAPEX 계산
         df_CAPEX = self.step_5_calculate_capex(CPpivot, CPconst) # CAPEX 생성
+        # df_CAPEX.to_csv(output_dir / "df_CAPEX.csv", index=False)
+        # exit()
 
         # 6. Cash Flow Statement 계산
         CFS = self.step_6_calculate_cash_flow(df_CAPEX, ElectricCapacityPerModule, annualCost_CASK) # CFS 생성
+        # CFS.to_csv(output_dir / "CFS.csv", index=False)
+        # exit()
 
         # 7. Analysis and save CFS
         self.step_7_analysis(CFS)

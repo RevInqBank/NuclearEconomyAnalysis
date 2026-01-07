@@ -213,6 +213,12 @@ def scaling(Country, df_EQcost_original, df_scaling_power, df_country_specific, 
 
         scaling_factors.append(total_scaling)
     
+    
+    # print(f"Scaling factors: {scaling_factors}")
+    # print(f"Scaling factors length: {len(scaling_factors)}")
+    # print(f"Scaling factors type: {type(scaling_factors)}")
+    # print(f"result_df:{result_df}")
+    # exit()
     # 새로운 scaled 열들 생성
     result_df['scaled_APR1400_EQcost_2025USD_min'] = result_df['APR1400_EQcost_2025USD_min'] * scaling_factors
     result_df['scaled_APR1400_EQcost_2025USD_Mean'] = result_df['APR1400_EQcost_2025USD_Mean'] * scaling_factors
