@@ -3,3 +3,8 @@ numpy
 matplotlib
 numpy-financial
 openpyxl
+pandas
+pytz
+six
+PyYAML
+networkx

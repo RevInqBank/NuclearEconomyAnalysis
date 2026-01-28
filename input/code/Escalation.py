@@ -116,6 +116,7 @@ def CAPEX(df_CAPEX, prep_period, construction_period, operation_period,
     
     # 4단계: EQ Cost에 CP별 ESCALATION 적용
     df_EQ_escalated = df_EQ.copy()
+    #print(df_EQ_escalated)
     
     for cp in cp_list:
         for year in years:
@@ -128,6 +129,10 @@ def CAPEX(df_CAPEX, prep_period, construction_period, operation_period,
             else:  # 나머지 CP들
                 df_EQ_escalated.loc[cp, year] *= (1 + escalationBOP) ** year_index
     
+
+
+    #print(df_EQ_escalated)
+
     # 5단계: CONSTRUCTION Cost에 ESCALATION 적용 (모든 CP에 동일)
     df_CONSTRUCTION_escalated = df_CONSTRUCTION.copy()
     
@@ -139,4 +144,5 @@ def CAPEX(df_CAPEX, prep_period, construction_period, operation_period,
     # 6단계: EQ Cost (escalated) + Construction Cost (escalated) 합계
     df_afterESCALATION = df_EQ_escalated + df_CONSTRUCTION_escalated
     
+    #print(df_afterESCALATION)
     return df_afterESCALATION

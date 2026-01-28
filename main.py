@@ -4,6 +4,7 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+import os
 
 import input.code.Reactor_Selection as RS
 import input.code.readInput as read
@@ -13,6 +14,8 @@ import input.code.Fuel_Cost_Input as Fuel
 import input.code.Cash_Flow_Statement as CF
 import input.code.Escalation as ESCALATION
 import input.code.Analysis as ANALYSIS
+import input.code.Scheduling as SCHEDULING
+
 
 @dataclass
 class ReactorConfig:
@@ -20,6 +23,7 @@ class ReactorConfig:
     use_yaml: bool
 
     # 1. Reactor Selection
+    reactorType: str
     powerDensity: float
     activeCoreD: float
     activeCoreDpct: float
@@ -63,6 +67,7 @@ class ReactorConfig:
     escalationTG: float
     escalationBOP: float
     escalationLabor: float
+    escalationOM: float
     escalationInterimStorage: float
     escalationDisposal: float
     debtToEquityRatio: float
@@ -85,16 +90,17 @@ class ReactorConfig:
     # 8. Country
     Country: str
 
+    # 9. Concrete Rate
+    Rate_BASEMAT: float
+    Rate_INCV: float
+    Rate_CNT: float
+    Licensing_Duration: float
+
 
 class economic_analysis():
 
     def __init__(self):
         super().__init__()
-        '''''
-        이건 그냥 건설 기간 우선 정하고 하는것 
-        '''''
-        self.constructionPeriod = 10.45  # years
-        self.preconstructionPeriod = 2  # years
 
         '''
         # Step 0: 변수 선언 및 초기화 ##########################################################################################################################
@@ -188,6 +194,10 @@ class economic_analysis():
             
             # #print(f"총 {len(df)}개 변수가 생성되었습니다.")
             # # return 없음 - None 반환
+        # print(f"self.config: {self.config}")
+        # How to print the self.config in each line:
+        for key, value in self.config.__dict__.items():
+            print(f"{key}: {value}")
 
     def step_2_read_source_excel(self, source_file):
         self.df_EQcost_original = pd.read_excel(source_file, sheet_name='EQcost') # EQ Cost 원본 데이터
@@ -239,6 +249,7 @@ class economic_analysis():
         self.df_EQcost_original = EQ.convert_currency(self.df_EQcost_original, self.df_currency) # 환율 변환 후 우측에 4개 열 추가
         self.df_EQcost_original = EQ.adjust_dollar_value(self.df_EQcost_original, self.df_dollarValue) # 딜러가치 변환 우측에 4개 열 추가 
         self.df_EQcost_original = EQ.mergeEQcost(self.df_EQcost_original) # min / Mean / MAX 구하기
+        #print(self.df_EQcost_original) 
 
         self.df_EQcost_original = EQ.scaling(self.config.Country, self.df_EQcost_original, self.df_scaling_power, self.df_country_specific, ElectricCapacityPerModule, self.config.moduleNumber, 
                         self.config.DesignSimplification_safetyPIPING, self.config.DesignSimplification_safetyVALVES, 
@@ -259,7 +270,7 @@ class economic_analysis():
         #print(df_CAPEX)
 
         df_CAPEX = ESCALATION.CAPEX(df_CAPEX, self.preconstructionPeriod, self.constructionPeriod, self.config.plantLifetime,self.config.escalationNSSS, self.config.escalationTG, self.config.escalationBOP, self.config.escalationLabor)
-        #print(CAPEX)
+        #print(df_CAPEX)
 
         return df_CAPEX    
 
@@ -308,14 +319,32 @@ class economic_analysis():
         ANALYSIS.CONSTRUCTION_COST(CFS)
 
         # for 형탁 (평소에는 삭제)
-        print(f"LCOE_CON: {LCOE_CON}, LCOE_OM: {LCOE_OM}, LCOE_FUEL: {LCOE_FUEL}, LCOE_FUEL_IS: {LCOE_FUEL_IS}, LCOE_TOTAL: {LCOE_TOTAL}")
-
+        print("------------------------------")
+        # print(f"LCOE_CON: {LCOE_CON:.2f}")
+        # print(f"LCOE_OM: {LCOE_OM:.2f}")
+        # print(f"LCOE_FUEL: {LCOE_FUEL:.2f}")
+        # print(f"LCOE_FUEL_IS: {LCOE_FUEL_IS:.2f}")
+        # print(f"LCOE_TOTAL: {LCOE_TOTAL:.2f}")
+        print(LCOE_CON)
+        print(LCOE_OM)
+        print(LCOE_FUEL)
+        print(LCOE_FUEL_IS)
+        print(LCOE_TOTAL)
+        print("------------------------------")
         return
 
     def run(self): 
         # step 1,2 Initialize the input data
-        # self.init()
+        # self.init()  ㅍ
 
+        current_directory = os.getcwd()
+        source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
+        df_scheduling = pd.read_excel(source_file, sheet_name = self.config.reactorType) # EQ Cost 원본 데이터
+        df_result, critical_path_duration = SCHEDULING.Rate(df_scheduling, self.config.Rate_BASEMAT, self.config.Rate_INCV, self.config.Rate_CNT)
+        self.constructionPeriod = max(critical_path_duration,10.45)  # years
+        self.preconstructionPeriod = 2  # years
+        #print(f"Construction Period: {self.constructionPeriod} years")
+        
         # step 2-2. Reactor Selection Output: 사실상 ElectricalCapacityPerModule 뽑는 용도
         (ThermalCapacityPerModule, ElectricCapacityPerModule, 
         TotalCapacity, CoreH, CoreD, RPVvolume) = RS.Core(self.config.powerDensity, self.config.activeCoreD, self.config.activeCoreH, self.config.activeCoreDpct, 
@@ -329,6 +358,7 @@ class economic_analysis():
         # step 3-2. eq cost 계산
         self.df_EQcost_original = self.step_3_calculate_eq_cost(ElectricCapacityPerModule) # self.self.df_EQcost_original 생성
         CPpivot = EQ.sum_by_CP(self.df_EQcost_original, self.df_CP_List, self.config.minMeanMAX) # CP별 합산한 값 반환
+        # print(CPpivot)
         # Save intermediate results to output directory
         # output_dir = self.project_root / "output"
         # output_dir.mkdir(parents=True, exist_ok=True)
@@ -344,7 +374,8 @@ class economic_analysis():
 
         # 5. CAPEX 계산
         df_CAPEX = self.step_5_calculate_capex(CPpivot, CPconst) # CAPEX 생성
-        # df_CAPEX.to_csv(output_dir / "df_CAPEX.csv", index=False)
+        #print(df_CAPEX)
+        #df_CAPEX.to_csv(output_dir / "df_CAPEX.csv", index=False)
         # exit()
 
         # 6. Cash Flow Statement 계산
@@ -363,3 +394,4 @@ if __name__ == "__main__":
     # model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     # train(model_args, data_args, training_args)
     economic_analysis().run()
+

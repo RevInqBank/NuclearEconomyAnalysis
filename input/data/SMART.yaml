@@ -6,20 +6,20 @@
 use_yaml: true
 
 # 1. Reactor Selection
-reactorType: "AP1000"           # reactor type (options: APR1400, AP1000, NuScale, SMART)
-powerDensity: 109.7             # [W/cc] core power density (default: 100.5, type: float)
-activeCoreD: 3.04               # [m] active core diameter (default: 3.647, type: float)
-activeCoreDpct: 0.76            # [-] active core diameter ratio (default: 0.788, type: float)
-activeCoreH: 4.27                # [m] active core height (default: 3.81, type: float)
-activeCoreHpct: 0.36            # [-] active core height ratio (default: 0.261, type: float)
-TGefficiency: 0.3023               # [-] turbine-generator efficiency (default: 0.35, type: float)
+reactorType: "SMART"           # reactor type (options: APR1400, AP1000, NuScale, SMART)
+powerDensity: 69.27              # [W/cc] core power density (default: 100.5, type: float)
+activeCoreD: 1.8316               # [m] active core diameter (default: 3.647, type: float)
+activeCoreDpct: 0.3213333            # [-] active core diameter ratio (default: 0.788, type: float)
+activeCoreH: 2                # [m] active core height (default: 3.81, type: float)
+activeCoreHpct: 0.129032258064516            # [-] active core height ratio (default: 0.261, type: float)
+TGefficiency: 0.3               # [-] turbine-generator efficiency (default: 0.35, type: float)
 moduleNumber: 2                  # [ea] number of modules (default: 2, type: int)
 
 # 2. Fuel Cost
 Feed: 0.00711                    # [-] enrichment feed assay (default: 0.00711, type: float)
-Product: 0.0445                   # [-] enrichment product assay (default: 0.045, type: float)
+Product: 0.045                   # [-] enrichment product assay (default: 0.045, type: float)
 Tail: 0.0022                     # [-] enrichment tails assay (default: 0.0022, type: float)
-totalFuelQty: 37.59               # [tU] total fuel quantity (default: 103.82, type: float)
+totalFuelQty: 7.168292201               # [tU] total fuel quantity (default: 103.82, type: float)
 U3O8Price: 135                   # [$ / kgU3O8] uranium price (default: 135, type: int)
 EnrichmentPrice: 97              # [$ / SWU] enrichment price (default: 97, type: int)
 FabricationPrice: 350            # [$ / tU] fabrication cost (default: 350, type: int)
@@ -37,7 +37,7 @@ ASSEMBLYperCORE: 241             # [ea] assemblies per core (default: 241, type:
 yearsForInterimStorage: 5        # [years] interim storage duration (default: 5, type: int)
 
 # 3. O&M Cost
-annualOMcost: 255.2                 # [$M/year] annual O&M cost (default: 50, type: int)
+annualOMcost: 64.96                 # [$M/year] annual O&M cost (default: 50, type: int)
 
 # 4. Operation
 plantLifetime: 60                # [years] plant lifetime (default: 60, type: int)
@@ -49,11 +49,11 @@ salesToRevenueRatio: 0.5         # [-] sales-to-revenue ratio (default: 0.5, typ
 escalationNSSS: 0                # [- / year] NSSS escalation (default: 0, type: int)
 escalationTG: 0.05               # [- / year] TG escalation (default: 0.05 (Vogtle), type: float)
 escalationBOP: 0.065              # [- / year] Miscellaneous escalation (default: 0.065 (Vogtle), type: float)
-escalationLabor: 0.052             # [- / year] labor escalation (default: 0.052 (Korea, past 15 years CAGR (2025)), type: float)
+escalationLabor: 0.052             # [- / year] labor escalation (default: 0.52 (Korea, past 15 years CAGR (2025)), type: float)
 escalationOM: 0.00                # [- / year] O&M escalation (default: 0.05, type: float)
 escalationInterimStorage: 0.05   # [- / year] interim storage escalation (default: 0.05, type: float): 습식 저장 인플레이션
 escalationDisposal: 0.05         # [- / year] disposal escalation (default: 0.05, type: float): 영구 저장 인플레이션
-debtToEquityRatio: 0.00           # [-] debt-to-equity ratio (min: 0, max: 1, default(optional): 0.9, type: float)
+debtToEquityRatio: 0.50           # [-] debt-to-equity ratio (min: 0, max: 1, default(optional): 0.9, type: float)
 interestRate: 0.05               # [- / year] interest rate (min: 0.0215, max: 0.06725, default(optional): 0.05, type: float)
 loanTenor: 18                    # [years] loan tenor (min: 0, max: 18, default(optional): 18, type: int)
 depreciationPeriod: 60           # [years] depreciation period (default: 60, type: int): 설계 수명
@@ -64,10 +64,10 @@ discountRate: 0.05               # [-] discount rate (default: 0.05, type: float
 minMeanMAX: "Mean"               # option {min, Mean, MAX} (default: "Mean", type: str)
 
 # 7. Scaling
-DesignSimplification_safetyPIPING: 0.17   # [-] safety piping factor (default: 1, type: int)
-DesignSimplification_safetyVALVES: 0.49   # [-] safety valves factor (default: 1, type: int)
-DesignSimplification_safetyPUMPS: 0.66    # [-] safety pumps factor (default: 1, type: int)
-DesignSimplification_safetyCABLES: 0.13   # [-] safety cables factor (default: 1, type: int)
+DesignSimplification_safetyPIPING: 0   # [-] safety piping factor (default: 1, type: int)
+DesignSimplification_safetyVALVES: 1   # [-] safety valves factor (default: 1, type: int)
+DesignSimplification_safetyPUMPS: 1    # [-] safety pumps factor (default: 1, type: int)
+DesignSimplification_safetyCABLES: 1   # [-] safety cables factor (default: 1, type: int)
 DesignSimplification_safetyMECH: 1     # [-] safety mechanical factor (default: 1, type: int)
 
 # 8. Country
