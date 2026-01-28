@@ -67,7 +67,6 @@ class ReactorConfig:
     escalationTG: float
     escalationBOP: float
     escalationLabor: float
-    escalationOM: float
     escalationInterimStorage: float
     escalationDisposal: float
     debtToEquityRatio: float
@@ -194,13 +193,12 @@ class economic_analysis():
             
             # #print(f"총 {len(df)}개 변수가 생성되었습니다.")
             # # return 없음 - None 반환
-        # print(f"self.config: {self.config}")
-        # How to print the self.config in each line:
-        for key, value in self.config.__dict__.items():
-            print(f"{key}: {value}")
 
     def step_2_read_source_excel(self, source_file):
         self.df_EQcost_original = pd.read_excel(source_file, sheet_name='EQcost') # EQ Cost 원본 데이터
+        # for key, value in self.config.__dict__.items():
+        if self.config.reactorType == 'Nuscale':
+            self.df_EQcost_original = pd.read_excel(source_file, sheet_name='EQcost_Nuscale') # EQ Cost 원본 데이터
         self.df_currency = pd.read_excel(source_file, sheet_name='Currency') # 환율 데이터
         self.df_dollarValue = pd.read_excel(source_file, sheet_name='dollarValue') # CPI 데이터
         self.df_CP_List = pd.read_excel(source_file, sheet_name='CP_List') # CP List 데이터
@@ -240,7 +238,6 @@ class economic_analysis():
         # self.df_schedule.to_csv('SCHEDULE.csv', index=False)
         
         # exit()
-
 
     def step_3_calculate_eq_cost(self, ElectricCapacityPerModule):
         '''
@@ -319,23 +316,27 @@ class economic_analysis():
         ANALYSIS.CONSTRUCTION_COST(CFS)
 
         # for 형탁 (평소에는 삭제)
-        print("------------------------------")
-        # print(f"LCOE_CON: {LCOE_CON:.2f}")
-        # print(f"LCOE_OM: {LCOE_OM:.2f}")
-        # print(f"LCOE_FUEL: {LCOE_FUEL:.2f}")
-        # print(f"LCOE_FUEL_IS: {LCOE_FUEL_IS:.2f}")
-        # print(f"LCOE_TOTAL: {LCOE_TOTAL:.2f}")
+        print("--------------------------------")
+        # print(f"LCOE_CON: {LCOE_CON:.2f}, LCOE_OM: {LCOE_OM:.2f}, LCOE_FUEL: {LCOE_FUEL:.2f}, LCOE_FUEL_IS: {LCOE_FUEL_IS:.2f}, LCOE_TOTAL: {LCOE_TOTAL:.2f}")
+        print(LCOE_TOTAL)
         print(LCOE_CON)
         print(LCOE_OM)
         print(LCOE_FUEL)
         print(LCOE_FUEL_IS)
-        print(LCOE_TOTAL)
-        print("------------------------------")
+        print("--------------------------------")
         return
 
     def run(self): 
         # step 1,2 Initialize the input data
-        # self.init()  ㅍ
+        # self.init()  
+        # wanna print config, row by row
+        for key, value in self.config.__dict__.items():
+            print(f"{key}: {value}")
+
+        """------------------------------------------------------------------------------------------"""
+        self.config.powerDensity = self.config.powerDensity * (100/1400)   #새로운 파워 일렉트릭 / 기존 파워 일렉트릭
+        """------------------------------------------------------------------------------------------"""
+        
 
         current_directory = os.getcwd()
         source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
@@ -358,7 +359,11 @@ class economic_analysis():
         # step 3-2. eq cost 계산
         self.df_EQcost_original = self.step_3_calculate_eq_cost(ElectricCapacityPerModule) # self.self.df_EQcost_original 생성
         CPpivot = EQ.sum_by_CP(self.df_EQcost_original, self.df_CP_List, self.config.minMeanMAX) # CP별 합산한 값 반환
-        # print(CPpivot)
+        print(CPpivot)
+        print("--------------------------------")
+        print(f"ElectricCapacityPerModule: {ElectricCapacityPerModule}")
+        print(f"ThermalCapacityPerModule: {ThermalCapacityPerModule}")
+        print("--------------------------------")
         # Save intermediate results to output directory
         # output_dir = self.project_root / "output"
         # output_dir.mkdir(parents=True, exist_ok=True)
@@ -394,4 +399,6 @@ if __name__ == "__main__":
     # model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     # train(model_args, data_args, training_args)
     economic_analysis().run()
+
+
 

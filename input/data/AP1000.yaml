@@ -50,7 +50,6 @@ escalationNSSS: 0                # [- / year] NSSS escalation (default: 0, type:
 escalationTG: 0.05               # [- / year] TG escalation (default: 0.05 (Vogtle), type: float)
 escalationBOP: 0.065              # [- / year] Miscellaneous escalation (default: 0.065 (Vogtle), type: float)
 escalationLabor: 0.052             # [- / year] labor escalation (default: 0.052 (Korea, past 15 years CAGR (2025)), type: float)
-escalationOM: 0.00                # [- / year] O&M escalation (default: 0.05, type: float)
 escalationInterimStorage: 0.05   # [- / year] interim storage escalation (default: 0.05, type: float): 습식 저장 인플레이션
 escalationDisposal: 0.05         # [- / year] disposal escalation (default: 0.05, type: float): 영구 저장 인플레이션
 debtToEquityRatio: 0.00           # [-] debt-to-equity ratio (min: 0, max: 1, default(optional): 0.9, type: float)

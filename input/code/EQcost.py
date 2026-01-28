@@ -9,6 +9,10 @@
 import pandas as pd
 import inspect
 import numpy as np
+import warnings
+
+# FutureWarning: elementwise comparison failed; returning scalar instead
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 # 환율 적용 ############################################################################################################
@@ -38,8 +42,19 @@ def convert_currency(df_EQcost_original, df_currency):
         print(f"NaN 개수: {result_df['procurement_SK34'].isna().sum()}")
     '''''
 
-    # 환율 딕셔너리 생성
-    currency_dict = dict(zip(df_currency['DATE'], df_currency['CURRENCY']))
+    # 환율 데이터 정렬 (날짜순)
+    df_currency_sorted = df_currency.sort_values('DATE').reset_index(drop=True)
+    
+    def find_closest_exchange_rate(target_date):
+        """가장 가까운 날짜의 환율을 찾는 함수"""
+        if target_date in df_currency_sorted['DATE'].values:
+            # 정확히 매칭되는 날짜가 있는 경우
+            return df_currency_sorted[df_currency_sorted['DATE'] == target_date]['CURRENCY'].iloc[0]
+        else:
+            # 가장 가까운 날짜 찾기
+            date_diffs = abs(df_currency_sorted['DATE'] - target_date)
+            closest_idx = date_diffs.idxmin()
+            return df_currency_sorted.loc[closest_idx, 'CURRENCY']
     
     # 처리할 열 목록
     columns_to_convert = [
@@ -54,7 +69,7 @@ def convert_currency(df_EQcost_original, df_currency):
             def convert_row(row):
                 try:
                     procurement_val = float(row[procurement_col])
-                    exchange_rate = currency_dict.get(row[contract_col], 1)
+                    exchange_rate = find_closest_exchange_rate(row[contract_col])
                     return (procurement_val / exchange_rate) / 1000000
                 except (ValueError, TypeError):
                     return 0  # 숫자가 아닌 경우 0으로 처리
@@ -136,7 +151,7 @@ def mergeEQcost(df_EQcost_original):
                     'procurement_SH12_USD_2025', 'procurement_SH34_USD_2025']
     # 각 행별 min, mean, max 계산하여 새로운 열 추가
     df_EQcost_original['APR1400_EQcost_2025USD_min'] = df_EQcost_original[cost_columns].min(axis=1)
-    df_EQcost_original['APR1400_EQcost_2025USD_Mean'] = df_EQcost_original[cost_columns].mean(axis=1)
+    df_EQcost_original['APR1400_EQcost_2025USD_Mean'] = df_EQcost_original[cost_columns].apply(lambda x: x[x != 0].mean() if (x != 0).any() else 0, axis=1)
     df_EQcost_original['APR1400_EQcost_2025USD_MAX'] = df_EQcost_original[cost_columns].max(axis=1)
 
     return df_EQcost_original
@@ -223,7 +238,9 @@ def scaling(Country, df_EQcost_original, df_scaling_power, df_country_specific, 
     result_df['scaled_APR1400_EQcost_2025USD_min'] = result_df['APR1400_EQcost_2025USD_min'] * scaling_factors
     result_df['scaled_APR1400_EQcost_2025USD_Mean'] = result_df['APR1400_EQcost_2025USD_Mean'] * scaling_factors
     result_df['scaled_APR1400_EQcost_2025USD_MAX'] = result_df['APR1400_EQcost_2025USD_MAX'] * scaling_factors
-    
+
+    #print(result_df)
+    result_df.to_excel('result_df_output.xlsx', index=False)    
     return result_df
 
 
@@ -254,6 +271,9 @@ def sum_by_CP(df_eqcost_processed, df_cp_list, minMeanMAX):
     final_result = result[[cp_col, desc_col, colname]].copy()
     final_result.columns = ['CP', 'Description', 'EQ_Cost_2025USD']  # 열 이름 변경
     
+
+    #print(final_result)
+
     return final_result
 
 
