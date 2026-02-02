@@ -71,7 +71,7 @@ def REVENUE(cashflow_df, ElectricCapacityPerModule, moduleNumber, electricityPri
 
 
 
-def OM_ANNUAL(cashflow_df, year_start, year_end,ElectricCapacityPerModule, moduleNumber):
+def OM_ANNUAL(SNU, cashflow_df, year_start, year_end,ElectricCapacityPerModule, moduleNumber):
     """
     OM Cost를 Cash Flow에 매핑 (연도별 상관식 적용)
     
@@ -99,6 +99,8 @@ def OM_ANNUAL(cashflow_df, year_start, year_end,ElectricCapacityPerModule, modul
     if start_year_int in cashflow_df.columns:
         age = start_fraction  # 첫 해는 부분 연도만큼의 AGE
         om_cost = (116 + 0.56 * age)*ElectricCapacityPerModule*moduleNumber/1000 if age <= 50 else (91 + 0.56 * age)*ElectricCapacityPerModule*moduleNumber/1000 # in million USD
+        if SNU:
+            om_cost = om_cost * 0.9
         cashflow_df.loc['Annual OM Cost', start_year_int] = -1* om_cost * start_fraction
     
     # 중간 완전 운영 연도들
@@ -106,12 +108,16 @@ def OM_ANNUAL(cashflow_df, year_start, year_end,ElectricCapacityPerModule, modul
     for year in range(start_year_int + 1, end_year_int + 1):
         if year in cashflow_df.columns:
             om_cost = (116 + 0.56 * current_age)*ElectricCapacityPerModule*moduleNumber/1000 if current_age <= 50 else (91 + 0.56 * current_age)*ElectricCapacityPerModule*moduleNumber/1000
+            if SNU:
+                om_cost = om_cost * 0.9
             cashflow_df.loc['Annual OM Cost', year] = -1* om_cost
             current_age += 1.0
     
     # 마지막 운영 연도 (부분 운영)
     if end_fraction > 0 and (end_year_int + 1) in cashflow_df.columns:
         om_cost = (116 + 0.56 * current_age)*ElectricCapacityPerModule*moduleNumber/1000 if current_age <= 50 else (91 + 0.56 * current_age)*ElectricCapacityPerModule*moduleNumber/1000
+        if SNU:
+            om_cost = om_cost * 0.9
         cashflow_df.loc['Annual OM Cost', end_year_int + 1] = -1* om_cost * end_fraction
     
     return cashflow_df

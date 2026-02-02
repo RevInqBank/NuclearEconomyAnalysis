@@ -22,6 +22,10 @@ def FrontEnd(Feed, Product, Tail, totalFuelQty, U3O8Price, EnrichmentPrice, Fabr
     tU3O8 = tUCNV / U3O8toF
 
     AnnualFuelCost = tU3O8*U3O8Price + tSWU*EnrichmentPrice + tUCNV*ConversionPrice + tUFAB*FabricationPrice
+    # (1) Natural Uranium Cost: tU3O8*U3O8Price
+    # (2) Conversion Cost: tSWU*ConversionPrice
+    # (3) Enrichment Cost: tUCNV*EnrichmentPrice
+    # (4) Fabrication Cost: tUFAB*FabricationPrice
 
     return AnnualFuelCost/1000  # in million USD
 

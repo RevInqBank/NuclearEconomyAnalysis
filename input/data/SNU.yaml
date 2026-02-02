@@ -7,7 +7,7 @@ use_yaml: true
 
 # 1. Reactor Selection
 reactorType: "SNU"           # reactor type (options: APR1400, AP1000, NuScale, SMART)
-powerDensity: 5.643             # [W/cc] core power density (default: 100.5, type: float)
+powerDensity: 3.386             # [W/cc] core power density (default: 100.5, type: float)
 activeCoreD: 4               # [m] active core diameter (default: 3.647, type: float)
 activeCoreDpct: 0.76            # [-] active core diameter ratio (default: 0.788, type: float)
 activeCoreH: 4.7                # [m] active core height (default: 3.81, type: float)
@@ -21,7 +21,7 @@ Product: 0.065                   # [-] enrichment product assay (default: 0.045,
 Tail: 0.0022                     # [-] enrichment tails assay (default: 0.0022, type: float)
 totalFuelQty: 37.59               # [tU] total fuel quantity (default: 103.82, type: float)
 U3O8Price: 135                   # [$ / kgU3O8] uranium price (default: 135, type: int)
-EnrichmentPrice: 97              # [$ / SWU] enrichment price (default: 97, type: int)
+EnrichmentPrice: 194              # [$ / SWU] enrichment price (default: 97, type: int)
 FabricationPrice: 350            # [$ / tU] fabrication cost (default: 350, type: int)
 ConversionPrice: 12              # [$ / tU] conversion cost (default: 12, type: int)
 BatchNumber: 1                 # [-] batch number (default: 2.5, type: float)
@@ -37,7 +37,7 @@ ASSEMBLYperCORE: 241             # [ea] assemblies per core (default: 241, type:
 yearsForInterimStorage: 5        # [years] interim storage duration (default: 5, type: int)
 
 # 3. O&M Cost
-annualOMcost: 64.96                 # [$M/year] annual O&M cost (default: 50, type: float)
+annualOMcost: 48                 # [$M/year] annual O&M cost (default: 50, type: float)
 
 # 4. Operation
 plantLifetime: 60                # [years] plant lifetime (default: 60, type: int)

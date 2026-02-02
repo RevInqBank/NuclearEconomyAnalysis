@@ -5,6 +5,7 @@ import yaml
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import os
+import argparse
 
 import input.code.Reactor_Selection as RS
 import input.code.readInput as read
@@ -335,18 +336,61 @@ class economic_analysis():
     def run(self): 
         # step 1,2 Initialize the input data
         # self.init()  
+        
+        # Initialize SNU flag
+        self.SNU = False
+        
+        # Special handling for SNU reloading triggered by args
+        if self.config.reactorType == 'SNU':
+            self.SNU = True
+            source_file = self.project_root / "input" / "data" / "SOURCE_DATA.xlsx"
+            self.df_EQcost_original = pd.read_excel(source_file, sheet_name='EQcost_SNU')
+            
         # wanna print config, row by row
         for key, value in self.config.__dict__.items():
             print(f"{key}: {value}")
 
         """------------------------------------------------------------------------------------------"""
-        self.config.powerDensity = self.config.powerDensity    #새로운 파워 일렉트릭 / 기존 파워 일렉트릭
+        """------------------------------------------------------------------------------------------"""
+        # Base MWe mapping
+        base_mwe_map = {
+            "APR1400": 1400,
+            "AP1000": 1027,
+            "SMART": 109.5,
+            "NuScale": 876,
+            "SNU": 60.45508316034181,
+            # "NuScale": 77 # Check if user meant 222 total (which is often 77*modules?) User said 222.
+            # >> Nuscale: 73*12=876
+        }
+        
+        base_mwe = base_mwe_map.get(self.config.reactorType, 1400) # Default to 1400 if unknown
+
+        if hasattr(self, 'target_mwe') and self.target_mwe is not None:
+             self.config.powerDensity = self.config.powerDensity * (self.target_mwe / base_mwe)
+        else:
+             # Default fallback if no argument is passed (original logic was 100/1400, preserving user's manual change for now if they run without args? 
+             # Actually user's code had 100/1400 hardcoded. I will make sure we respect that if no arg is passed, OR maybe just default to 100/1400 if that was their intent.
+             # But likely they want to preserve original behavior if run normally. 
+             # The user's code at line 337 was: self.config.powerDensity = self.config.powerDensity * (100/1400)
+             # I will keep that as the "else" but usually it's better to NOT scale if not asked?
+             # User said "그럼 내가 태깅한 코드는 APR1400에 대해서 100으로 스케일링한 것을 알겠지?" implies they were manually testing 100.
+             # I will use the manual hardcode just as a fallback or remove it if I am sure.
+             # Safest is to use the arg if present.
+             self.config.powerDensity = self.config.powerDensity
+
+        """------------------------------------------------------------------------------------------"""
         """------------------------------------------------------------------------------------------"""
         
 
         current_directory = os.getcwd()
         source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
-        df_scheduling = pd.read_excel(source_file, sheet_name = self.config.reactorType) # EQ Cost 원본 데이터
+        
+        # SNU uses AP1000 scheduling sheet
+        sched_sheet = self.config.reactorType
+        if sched_sheet == 'SNU':
+            sched_sheet = 'AP1000'
+            
+        df_scheduling = pd.read_excel(source_file, sheet_name = sched_sheet) # EQ Cost 원본 데이터
         df_result, critical_path_duration = SCHEDULING.Rate(df_scheduling, self.config.Rate_BASEMAT, self.config.Rate_INCV, self.config.Rate_CNT)
         self.constructionPeriod = max(critical_path_duration,10.45)  # years
         self.preconstructionPeriod = 2  # years
@@ -404,7 +448,34 @@ if __name__ == "__main__":
     # parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     # model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     # train(model_args, data_args, training_args)
-    economic_analysis().run()
+    parser = argparse.ArgumentParser(description='Economic Analysis for Nuclear Reactors')
+    parser.add_argument('--reactor', type=str, help='Reactor type (APR1400, AP1000, NuScale, SMART)')
+    parser.add_argument('--target_mwe', type=float, help='Target MWe')
+    args = parser.parse_args()
+    
+    analysis = economic_analysis()
+    if args.reactor:
+        analysis.config.reactorType = args.reactor
+        # Reload specific yaml for the reactor if needed or rely on base logic if it just overrides input.yaml
+        # However, input.yaml is loaded in init. We might need to reload or just set the attribute.
+        # But wait, step_1_read_yaml loads input.yaml. 
+        # Ideally we should load the specific yaml for that reactor if the user wants to switch context completely.
+        # But the user said "yaml 파일은 AP1000,APR1400,SMART,NuScale 있는거 보일 거야."
+        # So we should probably load the corresponding yaml file.
+        
+        project_root = Path(__file__).resolve().parent
+        reactor_yaml = project_root / "input" / "data" / f"{args.reactor}.yaml"
+        if reactor_yaml.exists():
+            analysis.step_1_read_yaml(reactor_yaml)
+        else:
+             print(f"Warning: Specific yaml for {args.reactor} not found. Using default input.yaml but overriding reactorType name.")
+
+    if args.target_mwe:
+        analysis.target_mwe = args.target_mwe
+    else:
+        analysis.target_mwe = None # Default behavior
+
+    analysis.run()
 
 
 
