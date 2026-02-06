@@ -285,7 +285,7 @@ class economic_analysis():
         CFS = CF.YEARS(self.preconstructionPeriod, self.constructionPeriod, self.config.plantLifetime)   #연도 생성 
         CFS = CF.REVENUE(CFS, ElectricCapacityPerModule, self.config.moduleNumber, self.config.electricityPrice, self.config.salesToRevenueRatio, self.config.capacityFactor, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime)  #Revenue 행 생성 
         CFS = CF.OM_ANNUAL(self.SNU, CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, ElectricCapacityPerModule, self.config.moduleNumber)  #OM_ANNUAL 행 생성
-        CFS = CF.FUEL_FRONTEND(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.Feed, self.config.Product, self.config.Tail, self.config.totalFuelQty, self.config.U3O8Price, self.config.EnrichmentPrice, self.config.FabricationPrice, self.config.ConversionPrice,self.config.moduleNumber,self.config.BatchNumber, self.config.BatchCycleLength, self.config.CoreDesignFactor)  #FUEL_FRONTEND 행 생성
+        CFS, self.ratio = CF.FUEL_FRONTEND(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.Feed, self.config.Product, self.config.Tail, self.config.totalFuelQty, self.config.U3O8Price, self.config.EnrichmentPrice, self.config.FabricationPrice, self.config.ConversionPrice,self.config.moduleNumber,self.config.BatchNumber, self.config.BatchCycleLength, self.config.CoreDesignFactor)  #FUEL_FRONTEND 행 생성
         CFS = CF.FUEL_INTERIM_STORAGE(CFS, self.config.interimCOST_initial, annualCost_CASK, self.config.interimCOST_OM, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.yearsForInterimStorage, self.config.BatchCycleLength)
         CFS = CF.GROSS_PROFIT(CFS)  #GROSS_PROFIT 행 생성
         CFS = CF.OM_CAPITAL(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, ElectricCapacityPerModule, self.config.moduleNumber)  #OM_ANNUAL 행 생성
@@ -311,7 +311,7 @@ class economic_analysis():
 
         return CFS
     
-    def step_7_analysis(self, CFS):
+    def step_7_analysis(self, CFS, ThermalCapacityPerModule):
         '''
         # STEP 7: Analysis ####################################################################################################################################
         '''
@@ -325,12 +325,26 @@ class economic_analysis():
         # for 형탁 (평소에는 삭제)
         print("--------------------------------")
         # print(f"LCOE_CON: {LCOE_CON:.2f}, LCOE_OM: {LCOE_OM:.2f}, LCOE_FUEL: {LCOE_FUEL:.2f}, LCOE_FUEL_IS: {LCOE_FUEL_IS:.2f}, LCOE_TOTAL: {LCOE_TOTAL:.2f}")
-        print(LCOE_TOTAL)
-        print(LCOE_CON)
-        print(LCOE_OM)
-        print(LCOE_FUEL)
-        print(LCOE_FUEL_IS)
+        print(f"LCOE_TOTAL: {LCOE_TOTAL}") # LCOE total
+        print(f"LCOE_CON: {LCOE_CON}") # LCOE construction
+        print(f"LCOE_OM: {LCOE_OM}") # LCOE operation and maintenance
+        print(f"LCOE_FUEL: {LCOE_FUEL + LCOE_FUEL_IS}") # LCOE fuel
         print("--------------------------------")
+        print(f"LCOE_U3O8: {LCOE_FUEL*self.ratio['U3O8']}") # LCOE natural uranium
+        print(f"LCOE_Conversion: {LCOE_FUEL*self.ratio['Conversion']}") # LCOE conversion
+        print(f"LCOE_Enrichment: {LCOE_FUEL*self.ratio['Enrichment']}") # LCOE enrichment
+        print(f"LCOE_Fabrication: {LCOE_FUEL*self.ratio['Fabrication']}") # LCOE fabrication
+        print(f"LCOE_FUEL_IS: {LCOE_FUEL_IS}") # LCOE fuel interim storage
+        print("--------------------------------")
+        EFPD = self.config.capacityFactor * self.config.BatchCycleLength * 30
+        BU_cycle = EFPD* ThermalCapacityPerModule / self.config.totalFuelQty
+        Discharged_BU = BU_cycle * self.config.BatchNumber
+        print(f"Average EFPD: {EFPD} [days]")
+        print(f"Average Discharged_BU: {Discharged_BU/1000} [MWd/kgU]") # Discharged BU
+        print(f"  Thermal Capacity: {ThermalCapacityPerModule} [MWth]")
+        print(f"  total fuel Qty: {self.config.totalFuelQty} [tU]")
+        print(f"  Batch Number: {self.config.BatchNumber}")
+        print(f"  Batch Cycle Length: {self.config.BatchCycleLength} [months]")
         return
 
     def run(self): 
@@ -358,7 +372,7 @@ class economic_analysis():
             "AP1000": 1027,
             "SMART": 109.5,
             "NuScale": 876,
-            "SNU": 60.45508316034181,
+            "SNU": 100,
             # "NuScale": 77 # Check if user meant 222 total (which is often 77*modules?) User said 222.
             # >> Nuscale: 73*12=876
         }
@@ -377,7 +391,10 @@ class economic_analysis():
              # I will use the manual hardcode just as a fallback or remove it if I am sure.
              # Safest is to use the arg if present.
              self.config.powerDensity = self.config.powerDensity
-
+        
+        print(f"BaseMWe: {base_mwe}")
+        print(f"ModifiedPowerDensity: {self.config.powerDensity}")
+        print("--------------------------------")
         """------------------------------------------------------------------------------------------"""
         """------------------------------------------------------------------------------------------"""
         
@@ -439,7 +456,7 @@ class economic_analysis():
         # exit()
 
         # 7. Analysis and save CFS
-        self.step_7_analysis(CFS)
+        self.step_7_analysis(CFS, ThermalCapacityPerModule)
 
         return
 
@@ -478,4 +495,4 @@ if __name__ == "__main__":
     analysis.run()
 
 
-
+# /mnt/ssd0/Donguk_data/miniconda3/envs/econ/bin/python main_for_loop.py --reactor APR1400 --target_mwe 1400

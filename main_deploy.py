@@ -5,6 +5,7 @@ import yaml
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import os
+import sys
 
 import input.code.Reactor_Selection as RS
 import input.code.readInput as read
@@ -107,7 +108,24 @@ class economic_analysis():
         # 0. 기본 변수들
         # Use Path(__file__).parent to get the directory where the script is located
         # This is more robust than os.getcwd() which depends on where you run the command from
-        self.project_root = Path(__file__).resolve().parent
+        if getattr(sys, 'frozen', False):
+            # Running as executable
+            exe_dir = Path(sys.executable).resolve().parent
+            external_input = exe_dir / "input"
+            
+            if external_input.exists():
+                # Priority 1: External input folder (allows customization)
+                print(f"Using external input from: {external_input}")
+                self.project_root = exe_dir
+            else:
+                # Priority 2: In-memory bundled input (standalone mode)
+                print("Using bundled input data.")
+                if hasattr(sys, '_MEIPASS'):
+                    self.project_root = Path(sys._MEIPASS).resolve()
+                else:
+                    self.project_root = exe_dir
+        else:
+            self.project_root = Path(__file__).resolve().parent
 
         '''
         # STEP 1: 엑셀 파일에서 INPUT 변수 및 값들 읽어오기 ####################################################################################################
@@ -284,7 +302,7 @@ class economic_analysis():
         CFS = CF.YEARS(self.preconstructionPeriod, self.constructionPeriod, self.config.plantLifetime)   #연도 생성 
         CFS = CF.REVENUE(CFS, ElectricCapacityPerModule, self.config.moduleNumber, self.config.electricityPrice, self.config.salesToRevenueRatio, self.config.capacityFactor, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime)  #Revenue 행 생성 
         CFS = CF.OM_ANNUAL(self.SNU, CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, ElectricCapacityPerModule, self.config.moduleNumber)  #OM_ANNUAL 행 생성
-        CFS, self.ratio = CF.FUEL_FRONTEND(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.Feed, self.config.Product, self.config.Tail, self.config.totalFuelQty, self.config.U3O8Price, self.config.EnrichmentPrice, self.config.FabricationPrice, self.config.ConversionPrice,self.config.moduleNumber,self.config.BatchNumber, self.config.BatchCycleLength, self.config.CoreDesignFactor)  #FUEL_FRONTEND 행 생성
+        CFS, ratio = CF.FUEL_FRONTEND(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.Feed, self.config.Product, self.config.Tail, self.config.totalFuelQty, self.config.U3O8Price, self.config.EnrichmentPrice, self.config.FabricationPrice, self.config.ConversionPrice,self.config.moduleNumber,self.config.BatchNumber, self.config.BatchCycleLength, self.config.CoreDesignFactor)  #FUEL_FRONTEND 행 생성
         CFS = CF.FUEL_INTERIM_STORAGE(CFS, self.config.interimCOST_initial, annualCost_CASK, self.config.interimCOST_OM, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, self.config.yearsForInterimStorage, self.config.BatchCycleLength)
         CFS = CF.GROSS_PROFIT(CFS)  #GROSS_PROFIT 행 생성
         CFS = CF.OM_CAPITAL(CFS, self.constructionPeriod, self.constructionPeriod + self.config.plantLifetime, ElectricCapacityPerModule, self.config.moduleNumber)  #OM_ANNUAL 행 생성
@@ -310,7 +328,7 @@ class economic_analysis():
 
         return CFS
     
-    def step_7_analysis(self, CFS, ThermalCapacityPerModule):
+    def step_7_analysis(self, CFS):
         '''
         # STEP 7: Analysis ####################################################################################################################################
         '''
@@ -324,26 +342,12 @@ class economic_analysis():
         # for 형탁 (평소에는 삭제)
         print("--------------------------------")
         # print(f"LCOE_CON: {LCOE_CON:.2f}, LCOE_OM: {LCOE_OM:.2f}, LCOE_FUEL: {LCOE_FUEL:.2f}, LCOE_FUEL_IS: {LCOE_FUEL_IS:.2f}, LCOE_TOTAL: {LCOE_TOTAL:.2f}")
-        print(f"LCOE_TOTAL: {LCOE_TOTAL}") # LCOE total
-        print(f"LCOE_CON: {LCOE_CON}") # LCOE construction
-        print(f"LCOE_OM: {LCOE_OM}") # LCOE operation and maintenance
-        print(f"LCOE_FUEL: {LCOE_FUEL + LCOE_FUEL_IS}") # LCOE fuel
+        print(LCOE_TOTAL)
+        print(LCOE_CON)
+        print(LCOE_OM)
+        print(LCOE_FUEL)
+        print(LCOE_FUEL_IS)
         print("--------------------------------")
-        print(f"LCOE_U3O8: {LCOE_FUEL*self.ratio['U3O8']}") # LCOE natural uranium
-        print(f"LCOE_Conversion: {LCOE_FUEL*self.ratio['Conversion']}") # LCOE conversion
-        print(f"LCOE_Enrichment: {LCOE_FUEL*self.ratio['Enrichment']}") # LCOE enrichment
-        print(f"LCOE_Fabrication: {LCOE_FUEL*self.ratio['Fabrication']}") # LCOE fabrication
-        print(f"LCOE_FUEL_IS: {LCOE_FUEL_IS}") # LCOE fuel interim storage
-        print("--------------------------------")
-        EFPD = self.config.capacityFactor * self.config.BatchCycleLength * 30
-        BU_cycle = EFPD* ThermalCapacityPerModule / self.config.totalFuelQty
-        Discharged_BU = BU_cycle * self.config.BatchNumber
-        print(f"Average EFPD: {EFPD} [days]")
-        print(f"Average Discharged_BU: {Discharged_BU/1000} [MWd/kgU]") # Discharged BU
-        print(f"  Thermal Capacity: {ThermalCapacityPerModule} [MWth]")
-        print(f"  total fuel Qty: {self.config.totalFuelQty} [tU]")
-        print(f"  Batch Number: {self.config.BatchNumber}")
-        print(f"  Batch Cycle Length: {self.config.BatchCycleLength} [months]")
         return
 
     def run(self): 
@@ -358,8 +362,8 @@ class economic_analysis():
         """------------------------------------------------------------------------------------------"""
         
 
-        current_directory = os.getcwd()
-        source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
+        # Use project_root determined in __init__
+        source_file = self.project_root / "input" / "data" / "SOURCE_DATA.xlsx"
         df_scheduling = pd.read_excel(source_file, sheet_name = self.config.reactorType) # EQ Cost 원본 데이터
         df_result, critical_path_duration = SCHEDULING.Rate(df_scheduling, self.config.Rate_BASEMAT, self.config.Rate_INCV, self.config.Rate_CNT)
         self.constructionPeriod = max(critical_path_duration,10.45)  # years
@@ -381,8 +385,8 @@ class economic_analysis():
         CPpivot = EQ.sum_by_CP(self.df_EQcost_original, self.df_CP_List, self.config.minMeanMAX) # CP별 합산한 값 반환
         print(CPpivot)
         print("--------------------------------")
-        print(f"ElectricCapacityPerModule[MWe]: {ElectricCapacityPerModule}")
-        print(f"ThermalCapacityPerModule[MWth]: {ThermalCapacityPerModule}")
+        print(f"ElectricCapacityPerModule: {ElectricCapacityPerModule}")
+        print(f"ThermalCapacityPerModule: {ThermalCapacityPerModule}")
         print("--------------------------------")
         # Save intermediate results to output directory
         # output_dir = self.project_root / "output"
@@ -409,7 +413,7 @@ class economic_analysis():
         # exit()
 
         # 7. Analysis and save CFS
-        self.step_7_analysis(CFS, ThermalCapacityPerModule)
+        self.step_7_analysis(CFS)
 
         return
 

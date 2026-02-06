@@ -34,14 +34,15 @@ def visualize_task_network(df):
     plt.show()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# 현재 작업 디렉토리 구하기
-current_directory = os.getcwd()
+if __name__ == "__main__":
+    # 현재 작업 디렉토리 구하기
+    current_directory = os.getcwd()
 
-#source_file = current_directory / "input" / "data" / "SOURCE_DATA.xlsx"
-source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
+    #source_file = current_directory / "input" / "data" / "SOURCE_DATA.xlsx"
+    source_file =  os.path.join(current_directory, "input", "data", "SOURCE_DATA.xlsx")
 
-df_scheduling = pd.read_excel(source_file, sheet_name='APR1400') # EQ Cost 원본 데이터
-#visualize_task_network(df_scheduling)
+    df_scheduling = pd.read_excel(source_file, sheet_name='APR1400') # EQ Cost 원본 데이터
+    #visualize_task_network(df_scheduling)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
@@ -107,8 +108,9 @@ def visualize_task_network_improved(df):
     #plt.show()
 
 
-# Test the improved visualization
-visualize_task_network_improved(df_scheduling)
+if __name__ == "__main__":
+    # Test the improved visualization
+    visualize_task_network_improved(df_scheduling)
 
 
 

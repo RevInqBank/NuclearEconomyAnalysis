@@ -138,7 +138,7 @@ def FUEL_FRONTEND(cashflow_df,year_start, year_end, Feed, Product, Tail, totalFu
     - 'FUEL_FRONTEND' 행이 추가된 Cash Flow DataFrame
     """
     
-    annual_fuel_cost = Fuel.FrontEnd(Feed, Product, Tail, totalFuelQty, U3O8Price, EnrichmentPrice, FabricationPrice, ConversionPrice,moduleNumber,BatchNumber, BatchCycleLength, CoreDesignFactor)
+    annual_fuel_cost, ratio = Fuel.FrontEnd(Feed, Product, Tail, totalFuelQty, U3O8Price, EnrichmentPrice, FabricationPrice, ConversionPrice,moduleNumber,BatchNumber, BatchCycleLength, CoreDesignFactor)
 
     # 기존 DataFrame에 FUEL_FRONTEND 행 추가
     cashflow_df.loc['FUEL (Front-end)'] = 0.0
@@ -164,7 +164,7 @@ def FUEL_FRONTEND(cashflow_df,year_start, year_end, Feed, Product, Tail, totalFu
     if end_fraction > 0 and (end_year_int + 1) in cashflow_df.columns:
         cashflow_df.loc['FUEL (Front-end)', end_year_int + 1] = -1* annual_fuel_cost * end_fraction
     
-    return cashflow_df
+    return cashflow_df, ratio
 
 
 

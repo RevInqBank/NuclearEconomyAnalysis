@@ -2,32 +2,51 @@ import math
 import numpy as np
 
 
-def FrontEnd(Feed, Product, Tail, totalFuelQty, U3O8Price, EnrichmentPrice, FabricationPrice, ConversionPrice,moduleNumber,BatchNumber, BatchCycleLength, CoreDesignFactor):
+def FrontEnd(x_Feed, x_Product, x_Tail, totalFuelQty, U3O8Price, EnrichmentPrice, FabricationPrice, ConversionPrice,moduleNumber,BatchNumber, BatchCycleLength, CoreDesignFactor):
 
     # 여기에 계산 로직 작성
-    FeedVF = (2*Feed-1)*math.log(Feed/(1-Feed))
-    ProductVF = (2*Product-1)*math.log(Product/(1-Product))
-    TailVF = (2*Tail-1)*math.log(Tail/(1-Tail))
-    FtoP = (Product-Tail)/(Feed-Tail)
-    #TtoP = (Product-Feed)/(Feed-Tail)
-    SWUtoP = (ProductVF-TailVF) - FtoP*(FeedVF-TailVF)
+    # totalFuelQty: Initial Core Inventory [tU/(module*one fuel charging)]
+
+    # (4) Fabrication Cost: tUFAB*FabricationPrice
+    tUFAB = totalFuelQty*moduleNumber*(12/(BatchNumber*BatchCycleLength))*CoreDesignFactor
+    FabricationCost = tUFAB*FabricationPrice
+    # (3) Enrichment Cost: tSWU*EnrichmentPrice
+    V_Feed = (2*x_Feed-1)*math.log(x_Feed/(1-x_Feed))
+    V_Product = (2*x_Product-1)*math.log(x_Product/(1-x_Product))
+    V_Tail = (2*x_Tail-1)*math.log(x_Tail/(1-x_Tail))
+    FtoP = (x_Product-x_Tail)/(x_Feed-x_Tail)
+    #TtoP = (x_Product-x_Feed)/(x_Feed-x_Tail)
+    SWUtoP = (V_Product-V_Tail) - FtoP*(V_Feed-V_Tail) # [SWU/tU]
+
+    tSWU = SWUtoP * tUFAB
+    EnrichmentCost = tSWU*EnrichmentPrice
+    # (2) Conversion Cost: tUCNV*ConversionPrice
+    tUCNV = FtoP * tUFAB
+    ConversionCost = tUCNV*ConversionPrice
+    # (1) Natural Uranium Cost: tU3O8*U3O8Price
     U238 = 238.051
     U235 = 235.044
     O16 = 15.999
-    U3O8toF = (Feed*U235 + (1-Feed)*U238)/((Feed*U235 + (1-Feed)*U238)+O16*8/3)
+    U3O8toF = (x_Feed*U235 + (1-x_Feed)*U238)/((x_Feed*U235 + (1-x_Feed)*U238)+O16*8/3)
 
-    tUFAB = totalFuelQty*moduleNumber/BatchNumber*(12/BatchCycleLength)*CoreDesignFactor
-    tSWU = SWUtoP * tUFAB
-    tUCNV = FtoP * tUFAB
     tU3O8 = tUCNV / U3O8toF
+    NaturalUraniumCost = tU3O8*U3O8Price
 
-    AnnualFuelCost = tU3O8*U3O8Price + tSWU*EnrichmentPrice + tUCNV*ConversionPrice + tUFAB*FabricationPrice
+    print("-----------")
+    print(f"tU3O8: {tU3O8}")
+    print(f"tUCNV: {tUCNV}")
+    print(f"tSWU: {tSWU}")
+    print(f"tUFAB: {tUFAB}")
+    print("-----------")
+
+    AnnualFuelCost = NaturalUraniumCost + ConversionCost + EnrichmentCost + FabricationCost
+    ratio = {"U3O8": NaturalUraniumCost/AnnualFuelCost, "Conversion": ConversionCost/AnnualFuelCost, "Enrichment": EnrichmentCost/AnnualFuelCost, "Fabrication": FabricationCost/AnnualFuelCost}
     # (1) Natural Uranium Cost: tU3O8*U3O8Price
-    # (2) Conversion Cost: tSWU*ConversionPrice
-    # (3) Enrichment Cost: tUCNV*EnrichmentPrice
+    # (2) Conversion Cost: tUCNV*ConversionPrice
+    # (3) Enrichment Cost: tSWU*EnrichmentPrice
     # (4) Fabrication Cost: tUFAB*FabricationPrice
 
-    return AnnualFuelCost/1000  # in million USD
+    return AnnualFuelCost/1000, ratio  # in million USD
 
 
 def InterimStorage(COSTperHM, HMperASSEMBLY,BatchNumber, BatchCycleLength, ASSEMBLYperCORE, moduleNumber):

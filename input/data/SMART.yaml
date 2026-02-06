@@ -16,25 +16,28 @@ TGefficiency: 0.30               # [-] turbine-generator efficiency (default: 0.
 moduleNumber: 2                  # [ea] number of modules (default: 2, type: int)
 
 # 2. Fuel Cost
-Feed: 0.00711                    # [-] enrichment feed assay (default: 0.00711, type: float)
-Product: 0.0445                   # [-] enrichment product assay (default: 0.045, type: float)
-Tail: 0.0022                     # [-] enrichment tails assay (default: 0.0022, type: float)
-totalFuelQty: 4               # [tU] total fuel quantity (default: 103.82, type: float)
-U3O8Price: 135                   # [$ / kgU3O8] uranium price (default: 135, type: int)
-EnrichmentPrice: 97              # [$ / SWU] enrichment price (default: 97, type: int)
-FabricationPrice: 350            # [$ / tU] fabrication cost (default: 350, type: int)
-ConversionPrice: 12              # [$ / tU] conversion cost (default: 12, type: int)
-BatchNumber: 2.5                 # [-] batch number (default: 2.5, type: float)
-BatchCycleLength: 18             # [months] batch cycle length (default: 18, type: int)
-CoreDesignFactor: 1              # [-] core design factor (default: 1, type: int)
-
-# Interim Storage
-interimCOST_initial: 9           # [$M] interim storage initial cost (default: 9, type: int)
-interimCOST_OM: 0.75             # [$M/year] interim storage O&M (default: 0.75, type: float)
-COSTperHM: 70                    # [$ / kgHM] heavy metal cost (default: 70, type: int)
-HMperASSEMBLY: 0.45              # [HM ton / assembly] HM per assembly (default: 0.45, type: float)
-ASSEMBLYperCORE: 241             # [ea] assemblies per core (default: 241, type: int)
-yearsForInterimStorage: 5        # [years] interim storage duration (default: 5, type: int)
+totalFuelQty: 4               # [tU] total fuel quantity 
+  # (2-1) Uranium purchase
+U3O8Price: 141                   # [$ / tU3O8] uranium price 
+  # (2-2) Conversion
+ConversionPrice: 25.54           # [$ / kgU] conversion cost 
+  # (2-3) Enrichment
+EnrichmentPrice: 100.23          # [$ / SWU] enrichment price 
+Feed: 0.00711                    # [-] enrichment feed assay 
+Product: 0.0445                   # [-] enrichment product assay 
+Tail: 0.0022                     # [-] enrichment tails assay 
+  # (2-4) Fabrication
+FabricationPrice: 525.36         # [$ / kgU] fabrication cost 
+BatchNumber: 2.5                 # [-] batch number 
+BatchCycleLength: 18             # [months] batch cycle length 
+CoreDesignFactor: 1              # [-] core design factor 
+  # (2-5) Interim Storage
+interimCOST_initial: 9           # [$M] interim storage initial cost 
+interimCOST_OM: 0.75             # [$M/year] interim storage O&M 
+COSTperHM: 70                    # [$ / kgHM] heavy metal cost 
+HMperASSEMBLY: 0.45              # [HM ton / assembly] HM per assembly 
+ASSEMBLYperCORE: 241             # [ea] assemblies per core 
+yearsForInterimStorage: 5        # [years] interim storage duration 
 
 # 3. O&M Cost
 annualOMcost: 255.2                 # [$M/year] annual O&M cost (default: 50, type: int)
